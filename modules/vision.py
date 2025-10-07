@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import random
 
+
 class VisionSystem:
     def __init__(self, simulate=False):
         self.simulate = simulate
@@ -124,3 +125,73 @@ class VisionSystem:
                     )
                 })
         return detections
+
+    # --- Simulation Mode (Webcam + Dummy Detection) ---
+    def run_simulation(self):
+        print("🎥 Starting webcam simulation... Press 'q' to quit.")
+        cap = cv2.VideoCapture(0)
+
+        if not cap.isOpened():
+            print("⚠️ Webcam not available. Exiting simulation.")
+            return
+
+        labels = ["person", "car", "dog", "bottle"]
+
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                print("⚠️ Failed to capture frame.")
+                break
+
+            # Draw random dummy detections
+            for _ in range(random.randint(1, 3)):
+                x1, y1 = random.randint(50, 200), random.randint(50, 200)
+                x2, y2 = x1 + random.randint(100, 200), y1 + random.randint(100, 200)
+                label = random.choice(labels)
+                color = (0, 255, 0)
+                cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+                cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+
+            # Show window
+            cv2.imshow("Dummy Vision - Webcam", frame)
+
+            # Exit on 'q'
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        cap.release()
+        cv2.destroyAllWindows()
+        print("✅ Simulation ended.")
+
+    def detect_person_simulation(self):
+    print("🧍 Person Detection (Simulation) - Press 'q' to quit.")
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        print("⚠️ Webcam not found.")
+        return
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        # Simulate random 'person' detections
+        for _ in range(random.randint(0, 2)):
+            x1, y1 = random.randint(50, 300), random.randint(50, 300)
+            x2, y2 = x1 + random.randint(100, 200), y1 + random.randint(150, 250)
+            color = (0, 255, 0)
+            cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+            cv2.putText(frame, "person", (x1, y1 - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+
+        cv2.imshow("Person Detection Simulation", frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+
+if __name__ == "__main__":
+    VisionSystem(simulate=True).run_simulation()
