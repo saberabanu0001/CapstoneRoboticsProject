@@ -233,5 +233,10 @@ secrets.json
 api_keys.txt
 .env.local
 .env.production
+# Ignore virtual environment
 depthai-env/
+__pycache__/
+*.pyc
+.DS_Store
+
 
