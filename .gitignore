@@ -233,3 +233,5 @@ secrets.json
 api_keys.txt
 .env.local
 .env.production
+depthai-env/
+
