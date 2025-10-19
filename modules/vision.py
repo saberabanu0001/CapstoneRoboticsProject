@@ -1,197 +1,169 @@
 import depthai as dai
 import cv2
 import numpy as np
-import random
+
+# ─────────────────────────────────────────────
+# Target classes
+# ─────────────────────────────────────────────
+TARGET_LABELS = [
+    "person", "cell phone", "bottle", "cup",
+    "potted plant", "sports ball", "book",
+    "wine glass", "vase"   # extra safety for bottle-like shapes
+]
+
+# ─────────────────────────────────────────────
+# Full COCO label map
+# ─────────────────────────────────────────────
+LABEL_MAP = [
+    "person","bicycle","car","motorbike","aeroplane","bus","train","truck","boat",
+    "traffic light","fire hydrant","stop sign","parking meter","bench","bird","cat",
+    "dog","horse","sheep","cow","elephant","bear","zebra","giraffe","backpack",
+    "umbrella","handbag","tie","suitcase","frisbee","skis","snowboard","sports balls",
+    "kite","baseball bat","baseball glove","skateboard","surfboard","tennis racket",
+    "bottle","wine glass","cup","fork","knife","spoon","bowl","banana","apple",
+    "sandwich","orange","broccoli","carrot","hot dog","pizza","donut","cake","chair",
+    "sofa","potted plant","bed","dining table","toilet","tvmonitor","laptop","mouse",
+    "remote","keyboard","cell phone","microwave","oven","toaster","sink","refrigerator",
+    "book","clock","vase","scissors","teddy bear","hair drier","toothbrush"
+]
 
 
+# ─────────────────────────────────────────────
+# Vision System (optimized for DepthAI v3.0.0)
+# ─────────────────────────────────────────────
 class VisionSystem:
-    def __init__(self, simulate=False):
-        self.simulate = simulate
+    def __init__(self):
+        print("🎥 Initializing OAK-D Lite Vision System (DepthAI v3.0.0)…")
+        self.pipeline = self.create_pipeline()
+        self.device = dai.Device(self.pipeline)
+        self.q_rgb = self.device.getOutputQueue("rgb", maxSize=4, blocking=False)
+        self.q_det = self.device.getOutputQueue("detections", maxSize=4, blocking=False)
+        self._z_ema = {}
 
-        if not self.simulate:
-            try:
-                # Create pipeline
-                self.pipeline = dai.Pipeline()
+    def create_pipeline(self):
+        print("🔧 Building DepthAI pipeline (YOLOv8n @ 640x352)…")
+        pipeline = dai.Pipeline()
 
-                # RGB camera
-                cam_rgb = self.pipeline.create(dai.node.ColorCamera)
-                cam_rgb.setPreviewSize(416, 416)   # YOLO input size
-                cam_rgb.setInterleaved(False)
+        # RGB Camera
+        cam_rgb = pipeline.create(dai.node.ColorCamera)
+        cam_rgb.setPreviewSize(640, 352)
+        cam_rgb.setPreviewKeepAspectRatio(False)
+        cam_rgb.setInterleaved(False)
+        cam_rgb.setFps(30)
 
-                # Mono + stereo depth
-                mono_left = self.pipeline.create(dai.node.MonoCamera)
-                mono_right = self.pipeline.create(dai.node.MonoCamera)
-                stereo = self.pipeline.create(dai.node.StereoDepth)
-                mono_left.setBoardSocket(dai.CameraBoardSocket.LEFT)
-                mono_right.setBoardSocket(dai.CameraBoardSocket.RIGHT)
+        # Mono cameras for stereo depth
+        monoL = pipeline.create(dai.node.MonoCamera)
+        monoR = pipeline.create(dai.node.MonoCamera)
+        monoL.setBoardSocket(dai.CameraBoardSocket.LEFT)
+        monoR.setBoardSocket(dai.CameraBoardSocket.RIGHT)
+        monoL.setResolution(dai.MonoCameraProperties.SensorResolution.THE_480_P)
+        monoR.setResolution(dai.MonoCameraProperties.SensorResolution.THE_480_P)
 
-                # YOLO Spatial Detection
-                detection_nn = self.pipeline.create(dai.node.YoloSpatialDetectionNetwork)
-                detection_nn.setBlobPath("yolo-v4-tiny_openvino_2021.4_6shave.blob")
-                detection_nn.setConfidenceThreshold(0.5)
+        # Stereo depth node
+        stereo = pipeline.create(dai.node.StereoDepth)
+        stereo.setLeftRightCheck(True)
+        stereo.setSubpixel(True)
+        stereo.setDepthAlign(dai.CameraBoardSocket.RGB)
+        stereo.initialConfig.setConfidenceThreshold(200)
+        stereo.initialConfig.setMedianFilter(dai.MedianFilter.KERNEL_5x5)
+        monoL.out.link(stereo.left)
+        monoR.out.link(stereo.right)
 
-                # YOLO params
-                detection_nn.setNumClasses(80)
-                detection_nn.setCoordinateSize(4)
-                detection_nn.setAnchors([
-                    10,14, 23,27, 37,58,
-                    81,82, 135,169, 344,319
-                ])
-                detection_nn.setAnchorMasks({
-                    "side26": [1,2,3],
-                    "side13": [3,4,5]
-                })
-                detection_nn.setIouThreshold(0.5)
+        # Spatial Detection Network (for YOLO with depth)
+        detection_nn = pipeline.create(dai.node.SpatialDetectionNetwork)
+        detection_nn.setBlobPath("models/yolov8n_coco_640x352.blob")
+        detection_nn.setConfidenceThreshold(0.35)
+        detection_nn.input.setBlocking(False)
+        
+        # Spatial detection specific settings
+        detection_nn.setBoundingBoxScaleFactor(0.5)
+        detection_nn.setDepthLowerThreshold(100)
+        detection_nn.setDepthUpperThreshold(4000)
 
-                # Outputs
-                xout_rgb = self.pipeline.create(dai.node.XLinkOut)
-                xout_nn = self.pipeline.create(dai.node.XLinkOut)
-                xout_depth = self.pipeline.create(dai.node.XLinkOut)
+        # Link RGB camera and depth to detection network
+        cam_rgb.preview.link(detection_nn.input)
+        stereo.depth.link(detection_nn.inputDepth)
 
-                xout_rgb.setStreamName("rgb")
-                xout_nn.setStreamName("detections")
-                xout_depth.setStreamName("depth")
+        # Output streams (using old API for v3.0.0)
+        xout_rgb = pipeline.createXLinkOut()
+        xout_rgb.setStreamName("rgb")
+        detection_nn.passthrough.link(xout_rgb.input)
 
-                # Linking
-                cam_rgb.preview.link(detection_nn.input)
-                mono_left.out.link(stereo.left)
-                mono_right.out.link(stereo.right)
-                stereo.depth.link(detection_nn.inputDepth)
-                detection_nn.passthrough.link(xout_rgb.input)
-                detection_nn.out.link(xout_nn.input)
-                stereo.depth.link(xout_depth.input)
+        xout_nn = pipeline.createXLinkOut()
+        xout_nn.setStreamName("detections")
+        detection_nn.out.link(xout_nn.input)
 
-                # Connect device
-                self.device = dai.Device(self.pipeline)
-                self.q_rgb = self.device.getOutputQueue("rgb", maxSize=4, blocking=False)
-                self.q_det = self.device.getOutputQueue("detections", maxSize=4, blocking=False)
-                self.q_depth = self.device.getOutputQueue("depth", maxSize=4, blocking=False)
+        return pipeline
 
-            except RuntimeError:
-                print("⚠️ No OAK-D device found → Switching to simulation mode.")
-                self.simulate = True
-
-    # --- Day-2 ---
-    def get_latest_frame(self):
-        if self.simulate:
-            return np.zeros((416, 416, 3), dtype=np.uint8)
-        in_rgb = self.q_rgb.tryGet()
-        if in_rgb is not None:
-            return in_rgb.getCvFrame()
-        return None
-
-    # --- Day-3 ---
-    def get_center_depth(self):
-        if self.simulate:
-            return round(random.uniform(0.5, 3.0), 2)  # meters
-        in_depth = self.q_depth.tryGet()
-        if in_depth is not None:
-            depth_frame = in_depth.getFrame()
-            h, w = depth_frame.shape
-            center = depth_frame[h//2, w//2]
-            return center / 1000.0  # mm → meters
-        return None
-
-    # --- Day-4 ---
-    def get_detections_with_depth(self):
-        if self.simulate:
-            labels = ["person", "dog", "car", "box"]
-            detections = []
-            for _ in range(random.randint(0, 3)):
-                detections.append({
-                    "label": random.choice(labels),
-                    "confidence": round(random.uniform(0.6, 0.95), 2),
-                    "bbox": [50, 50, 200, 200],
-                    "coords_mm": (
-                        random.randint(-100, 100),
-                        random.randint(-100, 100),
-                        random.randint(500, 3000)
-                    )
-                })
-            return detections
-
-        in_det = self.q_det.tryGet()
-        detections = []
-        if in_det is not None:
-            for det in in_det.detections:
-                detections.append({
-                    "label": det.label,
-                    "confidence": det.confidence,
-                    "bbox": [det.xmin, det.ymin, det.xmax, det.ymax],
-                    "coords_mm": (
-                        det.spatialCoordinates.x,
-                        det.spatialCoordinates.y,
-                        det.spatialCoordinates.z
-                    )
-                })
-        return detections
-
-    # --- Simulation Mode (Webcam + Dummy Detection) ---
-    def run_simulation(self):
-        print("🎥 Starting webcam simulation... Press 'q' to quit.")
-        cap = cv2.VideoCapture(0)
-
-        if not cap.isOpened():
-            print("⚠️ Webcam not available. Exiting simulation.")
-            return
-
-        labels = ["person", "car", "dog", "bottle"]
+    def run(self):
+        print("✅ Starting detection. Press Q to quit.")
+        cv2.namedWindow("Vision Detection", cv2.WINDOW_NORMAL)
 
         while True:
-            ret, frame = cap.read()
-            if not ret:
-                print("⚠️ Failed to capture frame.")
+            in_rgb = self.q_rgb.tryGet()
+            in_det = self.q_det.tryGet()
+
+            if not in_rgb:
+                continue
+
+            frame = in_rgb.getCvFrame()
+
+            # Apply contrast enhancement for better visibility
+            if frame is not None:
+                frame = cv2.convertScaleAbs(frame, alpha=1.2, beta=10)
+
+            if frame is not None and in_det is not None:
+                for det in in_det.detections:
+                    # Get label (handle index out of range)
+                    if det.label >= len(LABEL_MAP):
+                        continue
+                    
+                    label = LABEL_MAP[det.label]
+                    if label not in TARGET_LABELS:
+                        continue
+
+                    # Bounding box coordinates
+                    x1 = int(det.xmin * frame.shape[1])
+                    y1 = int(det.ymin * frame.shape[0])
+                    x2 = int(det.xmax * frame.shape[1])
+                    y2 = int(det.ymax * frame.shape[0])
+
+                    # Depth and confidence
+                    depth_m = det.spatialCoordinates.z / 1000.0
+                    conf = det.confidence * 100
+
+                    # Exponential moving average for smoother depth readings
+                    key = label
+                    prev = self._z_ema.get(key, depth_m)
+                    depth_m = 0.3 * depth_m + 0.7 * prev
+                    self._z_ema[key] = depth_m
+
+                    # Draw bounding box
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                    
+                    # Draw label with confidence and depth
+                    cv2.putText(
+                        frame,
+                        f"{label} {conf:.1f}% ({depth_m:.2f}m)",
+                        (x1, max(y1 - 10, 20)),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        (0, 255, 0),
+                        2,
+                    )
+                    
+                    # Console output
+                    print(f"[Vision] {label} ({conf:.1f}%) – {depth_m:.2f} m away")
+
+            if frame is not None:
+                cv2.imshow("Vision Detection", frame)
+                
+            if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
-
-            # Draw random dummy detections
-            for _ in range(random.randint(1, 3)):
-                x1, y1 = random.randint(50, 200), random.randint(50, 200)
-                x2, y2 = x1 + random.randint(100, 200), y1 + random.randint(100, 200)
-                label = random.choice(labels)
-                color = (0, 255, 0)
-                cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-                cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
-
-            # Show window
-            cv2.imshow("Dummy Vision - Webcam", frame)
-
-            # Exit on 'q'
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-
-        cap.release()
+                
         cv2.destroyAllWindows()
-        print("✅ Simulation ended.")
-
-    def detect_person_simulation(self):
-    print("🧍 Person Detection (Simulation) - Press 'q' to quit.")
-    cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
-        print("⚠️ Webcam not found.")
-        return
-
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        # Simulate random 'person' detections
-        for _ in range(random.randint(0, 2)):
-            x1, y1 = random.randint(50, 300), random.randint(50, 300)
-            x2, y2 = x1 + random.randint(100, 200), y1 + random.randint(150, 250)
-            color = (0, 255, 0)
-            cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-            cv2.putText(frame, "person", (x1, y1 - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
-
-        cv2.imshow("Person Detection Simulation", frame)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
+        print("🛑 Stopped. ✅ Vision module complete.")
 
 
 if __name__ == "__main__":
-    VisionSystem(simulate=True).run_simulation()
+    VisionSystem().run()
