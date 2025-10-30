@@ -1,3 +1,27 @@
+# --- Vision Module (Sabera Banu) ---
+numpy==1.23.5
+opencv-python==4.8.1.78
+opencv-contrib-python==4.8.1.78
+depthai==2.30.0.0
+torch>=2.0.0
+torchvision>=0.15.0
+imutils==0.5.4
+matplotlib==3.7.1
+tqdm==4.65.0
+requests==2.31.0
+
+#The YOLOv8n blob file already uploaded in: /models/yolov8n_coco_640x352.blob
+
+#*run this following this commands *
+
+#python3 -m venv capstone-env
+#source capstone-env/bin/activate
+#pip install -r requirements.txt
+
+
+
+
+
 # Core dependencies for Wall-E Companion Robot
 
 # Computer Vision and Image Processing
