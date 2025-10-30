@@ -9,7 +9,7 @@ class Rover:
     with configurable distance (m) and speed (slow/medium/fast).
     """
 
-    def __init__(self, port='/dev/tty.usbmodem58FA0943761', baudrate=115200, timeout=1):
+    def __init__(self, port='/dev/ttyACM0', baudrate=115200, timeout=1):
         self.ser = serial.Serial(port, baudrate, timeout=timeout)
         time.sleep(2)  # wait for the serial connection to initialize
         self.speeds = {'slow': 0.1, 'medium': 0.2, 'fast': 0.4}
