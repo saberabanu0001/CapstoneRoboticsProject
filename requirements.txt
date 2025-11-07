@@ -1,3 +1,13 @@
+
+# vlm BLIP
+torch
+transformers
+opencv-python
+pillow
+depthai
+
+
+
 # --- Vision Module (Sabera Banu) ---
 numpy==1.23.5
 opencv-python==4.8.1.78
