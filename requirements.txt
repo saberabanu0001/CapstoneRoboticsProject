@@ -1,0 +1,93 @@
+
+depthai
+opencv-python
+numpy
+=======
+
+# vlm BLIP
+torch
+transformers
+opencv-python
+pillow
+depthai
+
+
+
+# --- Vision Module (Sabera Banu) ---
+numpy==1.23.5
+opencv-python==4.8.1.78
+opencv-contrib-python==4.8.1.78
+depthai==2.30.0.0
+torch>=2.0.0
+torchvision>=0.15.0
+imutils==0.5.4
+matplotlib==3.7.1
+tqdm==4.65.0
+requests==2.31.0
+
+
+# --- Face Recognition Dependencies (Added by Sabera Banu) ---
+face-recognition==1.3.0
+face-recognition-models==0.3.0
+dlib==20.0.0
+Click==8.1.8
+numpy==2.0.2
+Pillow==11.3.0
+
+
+
+#The YOLOv8n blob file already uploaded in: /models/yolov8n_coco_640x352.blob
+
+#*run this following this commands *
+
+#python3 -m venv capstone-env
+#source capstone-env/bin/activate
+#pip install -r requirements.txt
+
+
+
+
+
+# Core dependencies for Wall-E Companion Robot
+
+# Computer Vision and Image Processing
+opencv-python>=4.8.0
+numpy>=1.24.0
+depthai>=2.23.0  # OAK-D camera support
+
+# Audio Processing
+pyaudio>=0.2.11
+speech-recognition>=3.10.0
+pyttsx3>=2.90  # Text-to-speech
+wave>=0.0.2
+
+# AI and Machine Learning
+torch>=2.0.0  # PyTorch for AI models
+torchvision>=0.15.0
+transformers>=4.30.0  # Hugging Face transformers for LLM
+openai>=1.0.0  # OpenAI API (if using GPT)
+
+# Hardware Control (Jetson/GPIO)
+Jetson.GPIO>=2.1.0  # NVIDIA Jetson GPIO library
+RPi.GPIO>=0.7.1  # Raspberry Pi GPIO (fallback/compatibility)
+
+# Networking and APIs
+requests>=2.31.0
+websockets>=11.0
+
+# Utilities
+python-dotenv>=1.0.0  # Environment variable management
+pyyaml>=6.0  # Configuration files
+pillow>=10.0.0  # Image processing
+matplotlib>=3.7.0  # Plotting and visualization (for debugging)
+
+# Development and Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+black>=23.0.0  # Code formatting
+flake8>=6.0.0  # Linting
+
+# Optional: Advanced AI features
+# ultralytics>=8.0.0  # YOLO models for object detection
+# onnxruntime>=1.15.0  # ONNX runtime for optimized inference
+>>>>>>> dea377af4274e5124b4eca662e9282d676801953
