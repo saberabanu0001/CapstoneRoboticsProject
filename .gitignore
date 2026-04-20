@@ -254,5 +254,8 @@ dist/
 # macOS junk
 .DS_Store
 
-
+# Portfolio / README images (exceptions after broad image ignores above)
+!/image/*.jpeg
+!/image/*.jpg
+!/image/*.png
 
