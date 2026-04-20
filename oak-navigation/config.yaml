@@ -1,0 +1,99 @@
+# OAK-D Navigation Configuration
+
+# Depth Processing Settings
+depth:
+  resolution: "400p"  # Options: 400p, 720p, 800p
+  fps: 30
+  extended_disparity: false  # Closer minimum depth
+  subpixel: true  # Better accuracy for longer distances
+  lr_check: true  # Better occlusion handling
+  median_filter: "KERNEL_7x7"  # Noise reduction
+  
+  # Depth range (millimeters)
+  min_depth: 300  # 30cm
+  max_depth: 10000  # 10m
+  
+  # Confidence threshold (0-255)
+  confidence_threshold: 200
+  
+  # Grid settings for navigation
+  grid_width: 64
+  grid_height: 48
+
+# Obstacle Avoidance Settings
+obstacle_avoidance:
+  strategy: "potential_field"  # Options: potential_field, vfh, simple_reactive, wall_following
+  safe_distance: 1.5  # meters
+  max_speed: 0.5  # m/s
+  min_speed: 0.1  # m/s
+  
+  # Potential field parameters
+  attractive_gain: 1.0
+  repulsive_gain: 2.0
+  
+  # VFH parameters
+  vfh_threshold: 100
+  vfh_sectors: 72
+
+# Path Planning Settings
+path_planning:
+  planner_type: "astar"  # Options: astar, dijkstra, rrt
+  
+  # Occupancy grid
+  grid_width: 20.0  # meters
+  grid_height: 20.0  # meters
+  resolution: 0.1  # meters per cell
+  
+  # Robot parameters
+  robot_radius: 0.3  # meters (for obstacle inflation)
+  
+  # RRT parameters
+  rrt_max_iterations: 1000
+  rrt_step_size: 0.5  # meters
+  rrt_goal_threshold: 0.3  # meters
+
+# Navigation Controller Settings
+navigation:
+  update_rate: 10.0  # Hz
+  default_mode: "manual"  # Options: manual, assisted, autonomous, waypoint, explore
+  
+  # Waypoint following
+  waypoint_threshold: 0.3  # meters (distance to consider waypoint reached)
+  lookahead_distance: 0.5  # meters (for path following)
+  
+  # Safety
+  emergency_stop_distance: 0.5  # meters
+  obstacle_percentage_threshold: 50  # percent
+
+# Spatial AI Settings (optional)
+spatial_ai:
+  enabled: false  # Requires neural network blob file
+  model_path: null  # Path to YOLO or MobileNet blob
+  confidence_threshold: 0.5
+  iou_threshold: 0.5
+  
+  # Obstacle classes (objects to avoid)
+  obstacle_classes:
+    - person
+    - bicycle
+    - car
+    - motorbike
+    - bus
+    - truck
+    - chair
+    - sofa
+    - bed
+    - diningtable
+
+# Logging Settings
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  log_to_file: false
+  log_file: "oakd_navigation.log"
+  
+# Performance Settings
+performance:
+  max_cpu_percent: 80
+  max_memory_mb: 1024
+  enable_profiling: false
+

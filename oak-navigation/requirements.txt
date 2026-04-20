@@ -1,0 +1,12 @@
+# OAK-D Navigation System Requirements
+
+# Core dependencies
+depthai>=2.20.0
+numpy>=1.21.0
+opencv-python>=4.5.0
+
+# Optional dependencies
+# PyYAML>=6.0  # For config file loading
+# matplotlib>=3.5.0  # For visualization
+# scipy>=1.7.0  # For advanced path planning algorithms
+
