@@ -9,15 +9,13 @@
     </td>
     <td align="center" valign="top" width="50%">
       <img src="image/me%20with%20professors%20with%20award.jpeg" width="300" alt="With faculty and the Best Innovation Award" />
+      <br /><br />
+      <img src="image/robot_image.jpg" width="300" alt="Autonomous UGV prototype with OAK-D stereo camera and Jetson Orin" />
     </td>
   </tr>
 </table>
 
 <p align="center"><em><b>Best Innovation Award</b> — capstone showcase and recognition with the project team and advisors.</em></p>
-
-<p align="center">
-  <img src="image/robot_image.jpg" width="520" alt="Autonomous UGV prototype with OAK-D stereo camera and Jetson Orin" />
-</p>
 <p align="center"><em>The physical <b>UGV</b> prototype: <b>OAK-D</b> stereo depth, sensing stack, and <b>NVIDIA Jetson Orin</b> edge compute.</em></p>
 
 A production-grade autonomous Unmanned Ground Vehicle (UGV) system leveraging NVIDIA Jetson Orin's edge AI computing capabilities. This capstone design project demonstrates advanced computer vision, real-time sensor fusion, and distributed system architecture for autonomous navigation in complex environments.
