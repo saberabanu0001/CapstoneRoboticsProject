@@ -2,12 +2,18 @@
 
 🏆 **Award-Winning Capstone Design Project | Best Innovation Award**
 
-<div align="center">
-  <img src="image/group_award%20time.jpeg" width="28%" alt="Capstone team with Best Innovation Award" />
-  &nbsp;
-  <img src="image/me%20with%20professors%20with%20award.jpeg" width="28%" alt="With faculty and the Best Innovation Award" />
-  <p><em><b>Best Innovation Award</b> — capstone showcase and recognition with the project team and advisors.</em></p>
-</div>
+<table align="center">
+  <tr>
+    <td align="center" valign="top" width="50%">
+      <img src="image/group_award%20time.jpeg" width="300" alt="Capstone team with Best Innovation Award" />
+    </td>
+    <td align="center" valign="top" width="50%">
+      <img src="image/me%20with%20professors%20with%20award.jpeg" width="300" alt="With faculty and the Best Innovation Award" />
+    </td>
+  </tr>
+</table>
+
+<p align="center"><em><b>Best Innovation Award</b> — capstone showcase and recognition with the project team and advisors.</em></p>
 
 A production-grade autonomous Unmanned Ground Vehicle (UGV) system leveraging NVIDIA Jetson Orin's edge AI computing capabilities. This capstone design project demonstrates advanced computer vision, real-time sensor fusion, and distributed system architecture for autonomous navigation in complex environments.
 
@@ -53,30 +59,47 @@ This award-winning capstone project delivers a complete end-to-end autonomous na
 - **Response Time**: <100ms end-to-end latency for obstacle avoidance
 - **Uptime**: 99%+ system reliability in field testing
 
-## 📁 Project Architecture
+## 📁 Repository structure
+
+Code is grouped by **role**: shared runtime on the robot (`modules`), the **OAK-D navigation** package (`oak-navigation`), the **robot** service layout, **tests** and **models**, and the **mobile** operator app. Paths below match this repository.
 
 ```
-autonomous-ugv-jetson-orin/
-├── robot/                    # Core robotics stack
-│   ├── perception/          # Computer vision & sensor processing
-│   ├── planning/            # Path planning & decision making
-│   ├── control/             # Motor control & actuation
-│   └── localization/        # SLAM & state estimation
-├── mobile/                   # Cross-platform mobile application
-│   ├── components/          # React Native UI components
-│   ├── services/            # API integration & WebSocket clients
-│   └── navigation/          # App routing & state management
-├── cloud/                    # Cloud infrastructure
-│   ├── api/                 # RESTful APIs & WebSocket servers
-│   ├── analytics/           # Data processing & ML pipelines
-│   └── deployment/          # Docker containers & orchestration
-├── oakd_navigation/          # OAK-D camera integration
-│   ├── depth_estimation/    # Stereo vision algorithms
-│   ├── object_detection/    # YOLO/SSD model integration
-│   └── calibration/        # Camera calibration utilities
-└── archive/                  # Legacy implementations
-    └── jetson_legacy/        # Previous platform adaptations
+CapstoneRoboticsProject/
+├── main.py                      # Primary vision / pipeline entry
+├── run_vision.py                # Alternate vision runner (camera + inference)
+├── requirements.txt             # Core Python dependencies (Jetson / dev machine)
+├── 99-depthai.rules             # udev rules for OAK cameras on Linux
+│
+├── image/                       # README and portfolio photos
+├── models/                      # Neural network weights (ONNX / blobs, etc.)
+├── modules/                     # Shared runtime: vision, motors, audio, rover glue
+│   ├── vision.py                # RGB, depth, YOLO and related perception
+│   ├── motor_control.py         # Locomotion interface
+│   └── known_faces/             # Face recognition assets / data
+│
+├── test/                        # Vision stack tests (camera, depth, YOLO, integration)
+│
+├── oak-navigation/              # OAK-D navigation: depth, detection, calibration, docs
+│   ├── calibration/
+│   ├── depth_estimation/
+│   ├── object_detection/
+│   └── examples/
+│
+├── robot/                       # On-robot packages (perception, control, planning, localization)
+│   ├── perception/              # Camera / API entrypoints for the physical platform
+│   ├── control/                 # Rover control, services, bring-up and install scripts
+│   ├── planning/                # High-level planning hooks (extend as needed)
+│   └── localization/            # Wake word, connectivity, and supporting state logic
+│
+└── mobile/                      # Expo + React Native field / operator application
+    ├── app/                     # Screens, routing, and app configuration
+    ├── components/              # UI building blocks
+    ├── services/                # APIs, device integrations, background tasks
+    ├── hooks/                   # Shared UI logic
+    └── context/                 # Global app state
 ```
+
+**Local development:** a `depthai-env/` virtual environment and/or a `depthai-python/` SDK checkout may sit next to this tree on a workstation or Jetson; those are environment artifacts rather than the application layout above.
 
 ## 🔬 Technical Challenges & Solutions
 

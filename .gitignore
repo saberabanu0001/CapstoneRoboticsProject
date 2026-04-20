@@ -259,3 +259,6 @@ dist/
 !/image/*.jpg
 !/image/*.png
 
+# Expo / React Native app manifests (exception to *.json above)
+!mobile/**/*.json
+

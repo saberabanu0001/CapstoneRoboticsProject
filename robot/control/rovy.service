@@ -1,0 +1,49 @@
+[Unit]
+Description=ROVY Robot Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=rovy
+Group=rovy
+SupplementaryGroups=video plugdev audio
+WorkingDirectory=/home/rovy/rovy_client/robot
+# Disable WirePlumber before starting to prevent audio conflicts
+ExecStartPre=/bin/bash /home/rovy/rovy_client/robot/disable_wireplumber.sh
+# Fix USB power management to prevent audio timeouts
+ExecStartPre=/bin/bash /home/rovy/rovy_client/robot/fix_usb_audio_power.sh
+ExecStart=/bin/bash /home/rovy/rovy_client/robot/start.sh
+
+# Restart configuration
+Restart=always
+RestartSec=10
+
+# Watchdog disabled - Deepgram API handles stability
+# WatchdogSec=300
+
+# Output
+StandardOutput=journal
+StandardError=journal
+
+# Timeout and kill configuration
+TimeoutStartSec=60
+TimeoutStopSec=30
+KillMode=mixed
+KillSignal=SIGTERM
+FinalKillSignal=SIGKILL
+
+# Resource limits to prevent runaway processes
+MemoryMax=2G
+CPUQuota=200%
+
+# Environment
+Environment=PYTHONUNBUFFERED=1
+Environment=CAMERA_WEBCAM_DEVICE=/dev/video0
+Environment=ROVER_SERIAL_DEVICE=/dev/ttyAMA0
+Environment=AUDIODEV=hw:3,0
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+
+[Install]
+WantedBy=multi-user.target
+
